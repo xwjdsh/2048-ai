@@ -96,9 +96,9 @@ h1.title {
   content: "Best"; }
 
 p {
-  margin-top: 1px;
-  margin-bottom: 1px;
-  line-height: 1.2; }
+  margin-top: 0;
+  margin-bottom: 10px;
+  line-height: 1.65; }
 
 a {
   color: #776e65;

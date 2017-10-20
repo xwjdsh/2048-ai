@@ -23,7 +23,7 @@ var directions = []grid.Direction{
 
 func (a *AI) Search(dept, alpha, beta int) (grid.Direction, int) {
 	bestDire, bestScore := grid.NONE, 0
-	tempDire, tempScore := grid.NONE, 0
+	tempScore := 0
 
 	if a.Grid.Active {
 		bestScore = alpha
@@ -33,9 +33,9 @@ func (a *AI) Search(dept, alpha, beta int) (grid.Direction, int) {
 				newGrid.Active = false
 				newAI := &AI{Grid: newGrid}
 				if dept == 0 {
-					tempDire, tempScore = bestDire, newAI.modelScore()
+					_, tempScore = bestDire, newAI.modelScore()
 				} else {
-					tempDire, tempScore = newAI.Search(dept-1, bestScore, beta)
+					_, tempScore = newAI.Search(dept-1, bestScore, beta)
 				}
 				if tempScore > bestScore {
 					bestScore = tempScore
@@ -67,9 +67,10 @@ func (a *AI) Search(dept, alpha, beta int) (grid.Direction, int) {
 
 		for _, bp := range badPoints {
 			newGrid := a.Grid.Clone()
+			newGrid.Data[bp.point.X][bp.point.Y] = bp.fill
 			newGrid.Active = true
 			newAI := &AI{Grid: newGrid}
-			tempDire, tempScore = newAI.Search(dept, alpha, bestScore)
+			_, tempScore = newAI.Search(dept, alpha, bestScore)
 			if tempScore < bestScore {
 				bestScore = tempScore
 			}
@@ -81,6 +82,32 @@ func (a *AI) Search(dept, alpha, beta int) (grid.Direction, int) {
 	return bestDire, bestScore
 }
 
+var (
+	model1 = [][]int{
+		{16, 15, 14, 13},
+		{9, 10, 11, 12},
+		{8, 7, 6, 5},
+		{1, 2, 3, 4},
+	}
+	model2 = [][]int{
+		{16, 15, 12, 4},
+		{14, 13, 11, 3},
+		{10, 9, 8, 2},
+		{7, 6, 5, 1},
+	}
+	model3 = [][]int{
+		{16, 15, 14, 4},
+		{13, 12, 11, 3},
+		{10, 9, 8, 2},
+		{7, 6, 5, 1},
+	}
+)
+
 func (a *AI) modelScore() int {
+	for x := 0; x < 4; x++ {
+		for y := 0; y < 4; y++ {
+
+		}
+	}
 	return 0
 }

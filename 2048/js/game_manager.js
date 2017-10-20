@@ -5,21 +5,12 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.actuator       = new Actuator;
 
   this.startTiles     = 2;
-  this.running        = false;
-  this.recordEnabled  = false;
-  this.isRecordGrids  = false;
-  this.isEnableStorage = false;
-  this.isAutoRestart = false;
-  this.step           = 0;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
-  this.inputManager.on("hint", this.hint.bind(this));
   this.inputManager.on("autoRun", this.autoRun.bind(this));
-  this.inputManager.on("recordGame", this.recordGame.bind(this));
-  this.inputManager.on("enableStorage", this.enableStorage.bind(this));
-  this.inputManager.on("autoRestart", this.autoRestart.bind(this));
+  
 
   this.setup();
 }
@@ -29,53 +20,6 @@ GameManager.prototype.restart = function () {
   this.storageManager.clearGameState();
   this.actuator.continueGame(); // Clear the game won/lost message
   this.setup();
-};
-
-GameManager.prototype.hint = function () {
-  this.sendPostRequest(computeUrl,{data:this.grid.toArray(),step:this.step},this.hintResult);
-};
-
-GameManager.prototype.autoRun = function () {
-  if(this.running){
-    this.running=false;
-  }else{
-    this.running=true;
-    this.sendPostRequest(computeUrl,{data:this.grid.toArray(),step:this.step},this.run);
-  }
-  this.updateButton()
-};
-
-GameManager.prototype.updateButton = function () {
-  if(!this.running){
-    this.actuator.setRunButton('AutoRun');
-    this.actuator.setHint('Hint');
-  }else{
-    this.actuator.setRunButton('Stop');
-  }
-};
-
-
-GameManager.prototype.recordGame = function () {
-  this.isRecordGrids = this.actuator.isRecordGrid()
-  this.actuate();
-};
-
-GameManager.prototype.enableStorage = function () {
-  this.isEnableStorage = this.actuator.isEnableStorage();
-  this.actuate();
-};
-
-GameManager.prototype.autoRestart = function () {
-  this.isAutoRestart = this.actuator.isAutoRestart();
-  this.actuate();
-};
-
-
-GameManager.prototype.hintResult = function(resp) {
-  var r=JSON.parse(resp.responseText);
-  if(r&&r.code==0){
-    this.actuator.showHint(r.data)
-  }
 };
 
 // Keep playing after winning (allows going over 2048)
@@ -90,7 +34,7 @@ GameManager.prototype.isGameTerminated = function () {
 };
 
 // Set up the game
-GameManager.prototype.setup = function (autoRestart) {
+GameManager.prototype.setup = function () {
   var previousState = this.storageManager.getGameState();
 
   // Reload the game from a previous game if present
@@ -101,37 +45,16 @@ GameManager.prototype.setup = function (autoRestart) {
     this.over        = previousState.over;
     this.won         = previousState.won;
     this.keepPlaying = previousState.keepPlaying;
-    this.recordGrids = previousState.recordGrids;
-    this.isRecordGrids = previousState.isRecordGrids;
-    this.isEnableStorage = previousState.isEnableStorage;
-    this.isAutoRestart = previousState.isAutoRestart;
-    this.step = previousState.step;
-    if(!this.isEnableStorage||autoRestart){
-      this.grid        = new Grid(this.size);
-      this.score       = 0;
-      this.over        = false;
-      this.won         = false;
-      this.keepPlaying = false;
-      this.recordGrids = new Array();
-      this.step = 0;
-      this.addStartTiles();
-    }
   } else {
     this.grid        = new Grid(this.size);
     this.score       = 0;
     this.over        = false;
     this.won         = false;
-    this.step        = 0;
     this.keepPlaying = false;
-    this.running = false;
-    this.recordGrids = new Array();
-    this.isRecordGrids = true;
-    this.isEnableStorage = true;
-    this.isAutoRestart = false;
+
     // Add the initial tiles
     this.addStartTiles();
   }
-  this.updateButton()
 
   // Update the actuator
   this.actuate();
@@ -172,10 +95,7 @@ GameManager.prototype.actuate = function () {
     over:       this.over,
     won:        this.won,
     bestScore:  this.storageManager.getBestScore(),
-    terminated: this.isGameTerminated(),
-    isRecordGrids:this.isRecordGrids,
-    isEnableStorage:this.isEnableStorage,
-    isAutoRestart:this.isAutoRestart,
+    terminated: this.isGameTerminated()
   });
 
 };
@@ -187,12 +107,7 @@ GameManager.prototype.serialize = function () {
     score:       this.score,
     over:        this.over,
     won:         this.won,
-    keepPlaying: this.keepPlaying,
-    recordGrids: this.recordGrids,
-    isRecordGrids:this.isRecordGrids,
-    isEnableStorage:this.isEnableStorage,
-    isAutoRestart:this.isAutoRestart,
-    step: this.step,
+    keepPlaying: this.keepPlaying
   };
 };
 
@@ -254,9 +169,7 @@ GameManager.prototype.move = function (direction) {
           self.score += merged.value;
 
           // The mighty 2048 tile
-          if(maxScore>0&&merged.value === maxScore){
-             self.won = true;
-          }
+          if (merged.value === 2048) self.won = true;
         } else {
           self.moveTile(tile, positions.farthest);
         }
@@ -269,25 +182,14 @@ GameManager.prototype.move = function (direction) {
   });
 
   if (moved) {
-    this.step++;
     this.addRandomTile();
 
     if (!this.movesAvailable()) {
       this.over = true; // Game over!
-      // Send grid 
-      if(this.isRecordGrids){
-        this.sendPostRequest(recordUrl,{grid:this.recordGrids,score:this.score})
-      }
-      if(this.isAutoRestart){
-        this.setup(true);
-        this.running=true;
-        this.updateButton()
-      }
     }
 
     this.actuate();
   }
-  this.recordGrid()
 };
 
 // Get the vector representing the chosen direction
@@ -371,55 +273,44 @@ GameManager.prototype.positionsEqual = function (first, second) {
   return first.x === second.x && first.y === second.y;
 };
 
-GameManager.prototype.recordGrid = function () {
-  this.recordGrids.push(this.grid.toArray())
-  if(this.recordGrids.length>5){
-    this.recordGrids.shift()
-  }
-  //console.log(JSON.stringify(this.recordGrids))
-}
-
-GameManager.prototype.sendPostRequest = function (url,data,callback) {
+GameManager.prototype.autoRun = function () {
   var self=this;
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", url, true);
-
-  xhr.setRequestHeader("Content-Type", "application/json");
-
-  xhr.onreadystatechange = function() {//Call a function when the state changes.
-      if(xhr.readyState == 4 && xhr.status == 200) {
-        self.func=callback;
-        self.func(xhr);
-      }
-  }
-  xhr.send(JSON.stringify(data));
-}
-
-// moves continuously until game is over
-GameManager.prototype.run = function(resp) {
-
-  var r=JSON.parse(resp.responseText);
-  if(r&&r.code==0){
-    if(!this.running){
-      return
-    }
-    if(this.over){
-      this.running=false;
-      this.updateButton()
-      return
-    }
-
-    this.actuator.showHint(r.data)
-    this.move(r.data);
-
-    var self = this;
-    var timeout = animationDelay;
-
-    if (this.running && !this.over && !this.won) {
-      setTimeout(function(){
-        self.sendPostRequest(computeUrl,{data:self.grid.toArray(),step:self.step},self.run);
-      }, timeout);
-
+  if(this.running){
+    this.running=false;
+  }else{
+    if (window["WebSocket"]) {
+      var ws = new WebSocket("ws://"+window.location.host+"/compute");
+      
+      ws.onopen = function(evt) { 
+        self.running=true;
+        console.log("Connection open ..."); 
+        ws.send(JSON.stringify({
+          data: self.grid.toArray()
+        }));
+      };
+      
+      ws.onmessage = function(evt) {
+        console.log( "Received Message: " + evt.data);
+      };
+      
+      ws.onclose = function(evt) {
+        self.running=false;
+        console.log("Connection closed.");
+      };      
+    } else {
+      var item = document.createElement("div");
+      item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+      appendLog(item);
     }
   }
-}
+  this.updateButton()
+};
+
+GameManager.prototype.updateButton = function () {
+  if(!this.running){
+    this.actuator.setRunButton('AutoRun');
+    this.actuator.setHint('Hint');
+  }else{
+    this.actuator.setRunButton('Stop');
+  }
+};

@@ -71,12 +71,9 @@ KeyboardInputManager.prototype.listen = function () {
   // Respond to button presses
   this.bindButtonPress(".retry-button", this.restart);
   this.bindButtonPress(".restart-button", this.restart);
-  this.bindButtonPress(".keep-playing-button", this.keepPlaying);
   this.bindButtonPress(".hint-button", this.hint);
-  this.bindButtonPress(".ai-button", this.autoRun);
-  this.bindButtonPress(".recordGrid-checkbox", this.recordGame);
-  this.bindButtonPress(".cache-checkbox", this.enableStorage);
-  this.bindButtonPress(".auto-restart-checkbox", this.autoRestart);
+  this.bindButtonPress(".ai-button", this.autoRun); 
+  this.bindButtonPress(".keep-playing-button", this.keepPlaying);
 
   // Respond to swipe events
   var touchStartClientX, touchStartClientY;
@@ -132,11 +129,6 @@ KeyboardInputManager.prototype.listen = function () {
   });
 };
 
-KeyboardInputManager.prototype.restart = function (event) {
-  event.preventDefault();
-  this.emit("restart");
-};
-
 KeyboardInputManager.prototype.hint = function (event) {
   this.emit("hint");
 };
@@ -145,16 +137,9 @@ KeyboardInputManager.prototype.autoRun = function (event) {
   this.emit("autoRun");
 };
 
-KeyboardInputManager.prototype.recordGame = function (event) {
-  this.emit("recordGame");
-};
-
-KeyboardInputManager.prototype.enableStorage = function (event) {
-  this.emit("enableStorage");
-};
-
-KeyboardInputManager.prototype.autoRestart = function (event) {
-  this.emit("autoRestart");
+KeyboardInputManager.prototype.restart = function (event) {
+  event.preventDefault();
+  this.emit("restart");
 };
 
 KeyboardInputManager.prototype.keepPlaying = function (event) {

@@ -5,17 +5,17 @@ import "github.com/xwjdsh/2048-ai/utils"
 type Direction int
 
 const (
-	NONE Direction = iota
-
-	UP
+	UP Direction = iota
 	RIGHT
 	DOWN
 	LEFT
+
+	NONE
 )
 
 type Grid struct {
-	Active bool
-	Data   [4][4]int
+	Active bool      `json:"-"`
+	Data   [4][4]int `json:"data"`
 }
 
 func (g *Grid) Clone() *Grid {

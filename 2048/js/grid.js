@@ -132,4 +132,4 @@ Grid.prototype.toArray = function () {
     }
   }
   return data
-}
+};
