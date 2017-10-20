@@ -14,8 +14,7 @@ const (
 )
 
 type Grid struct {
-	Active bool      `json:"-"`
-	Data   [4][4]int `json:"data"`
+	Data [4][4]int `json:"data"`
 }
 
 func (g *Grid) Clone() *Grid {

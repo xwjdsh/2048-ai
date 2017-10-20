@@ -145,3 +145,7 @@ HTMLActuator.prototype.setHint = function(message) {
 HTMLActuator.prototype.setRunButton = function(message) {
   document.getElementById('ai-button').innerHTML = message;
 };
+
+HTMLActuator.prototype.showHint = function(hint) {
+  document.getElementById("hint-button").innerHTML = ['↑','→','↓','←'][hint];
+}

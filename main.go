@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/xwjdsh/2048-ai/ai"
 	"github.com/xwjdsh/2048-ai/grid"
 )
 
@@ -56,7 +57,11 @@ func compute(w http.ResponseWriter, r *http.Request) {
 			log.Println("unmarshal message error:", err.Error())
 			break
 		}
-
+		a := &ai.AI{Grid: g, Active: true}
+		dire := a.GetBest()
+		result := map[string]grid.Direction{"dire": dire}
+		p, _ = json.Marshal(result)
+		log.Println(string(p))
 		if err := conn.WriteMessage(messageType, p); err != nil {
 			log.Println("write message error:", err.Error())
 			break

@@ -290,7 +290,13 @@ GameManager.prototype.autoRun = function () {
       };
       
       ws.onmessage = function(evt) {
-        console.log( "Received Message: " + evt.data);
+        var resp=JSON.parse(evt.data);
+        console.log( "Received Message: " + resp);
+        if(self.run(resp.dire)){
+          ws.send(JSON.stringify({
+            data: self.grid.toArray()
+          }));
+        }
       };
       
       ws.onclose = function(evt) {
@@ -314,3 +320,21 @@ GameManager.prototype.updateButton = function () {
     this.actuator.setRunButton('Stop');
   }
 };
+
+// moves continuously until game is over
+GameManager.prototype.run = function(dire) {
+  if(!this.running){
+    return
+  }
+  if(this.over){
+    this.running=false;
+    this.updateButton()
+    return
+  }
+
+  this.actuator.showHint(dire)
+  this.move(dire);
+
+  var self = this;
+  return this.running && !this.over && !this.won
+}
