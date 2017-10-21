@@ -1,8 +1,6 @@
 package ai
 
 import (
-	"time"
-
 	"github.com/xwjdsh/2048-ai/grid"
 	"github.com/xwjdsh/2048-ai/utils"
 )
@@ -24,80 +22,58 @@ var directions = []grid.Direction{
 	grid.RIGHT,
 }
 
-func (a *AI) GetBest() grid.Direction {
-	start := time.Now().UnixNano() / 1000000
-	bestDire := grid.NONE
-	dept := 0
-	for ; ; dept++ {
-		dire, _ := a.search(dept, 0, 0)
-		if dire == grid.NONE {
-			break
-		}
-		bestDire = dire
-		if time.Now().UnixNano()/1000000-start > 100 {
-			break
+func (a *AI) Search() grid.Direction {
+	var (
+		bestDire  = grid.NONE
+		bestScore float64
+	)
+	for _, dire := range directions {
+		newGrid := a.Grid.Clone()
+		if newGrid.Move(dire) {
+			newAI := &AI{Grid: newGrid, Active: false}
+			if newScore := newAI.expectSearch(6); newScore > bestScore {
+				bestDire = dire
+				bestScore = newScore
+			}
 		}
 	}
 	return bestDire
 }
 
-func (a *AI) search(dept, alpha, beta int) (grid.Direction, int) {
-	bestDire, bestScore := grid.NONE, 0
-	tempScore := 0
+var expectMap = map[int]float64{
+	2: 0.9,
+	4: 0.1,
+}
 
+func (a *AI) expectSearch(dept int) float64 {
+	if dept == 0 {
+		return float64(a.score())
+	}
+	var score float64
 	if a.Active {
-		bestScore = alpha
-		for _, dire := range directions {
+		for _, d := range directions {
 			newGrid := a.Grid.Clone()
-			if newGrid.Move(dire) {
+			if newGrid.Move(d) {
 				newAI := &AI{Grid: newGrid, Active: false}
-				if dept == 0 {
-					_, tempScore = bestDire, newAI.score()
-				} else {
-					_, tempScore = newAI.search(dept-1, bestScore, beta)
-				}
-				if tempScore > bestScore {
-					bestScore = tempScore
-					bestDire = dire
-				}
-				if bestScore > beta {
-					return bestDire, beta
+				if newScore := newAI.expectSearch(dept - 1); newScore > score {
+					score = newScore
 				}
 			}
 		}
 	} else {
-		bestScore = beta
-		badScore := 0
-		badPoints := []badPoint{}
-		for _, p := range a.Grid.VacantPoints() {
-			for _, f := range []int{2, 4} {
-				a.Grid.Data[p.X][p.Y] = f
-				score := -a.score()
-				bp := badPoint{point: p, fill: f}
-				if score < badScore {
-					badScore = score
-					badPoints = []badPoint{bp}
-				} else if score == badScore {
-					badPoints = append(badPoints, bp)
-				}
-				a.Grid.Data[p.X][p.Y] = 0
+		points := a.Grid.VacantPoints()
+		for k, v := range expectMap {
+			for _, point := range points {
+				newGrid := a.Grid.Clone()
+				newGrid.Data[point.X][point.Y] = k
+				newAI := &AI{Grid: newGrid, Active: true}
+				newScore := newAI.expectSearch(dept - 1)
+				score += float64(newScore) * v
 			}
 		}
-
-		for _, bp := range badPoints {
-			newGrid := a.Grid.Clone()
-			newGrid.Data[bp.point.X][bp.point.Y] = bp.fill
-			newAI := &AI{Grid: newGrid, Active: true}
-			_, tempScore = newAI.search(dept, alpha, bestScore)
-			if tempScore < bestScore {
-				bestScore = tempScore
-			}
-			if bestScore < alpha {
-				return grid.NONE, alpha
-			}
-		}
+		score /= float64(len(points))
 	}
-	return bestDire, bestScore
+	return score
 }
 
 var (
@@ -125,9 +101,11 @@ func (a *AI) score() int {
 	result := make([]int, 24)
 	for x := 0; x < 4; x++ {
 		for y := 0; y < 4; y++ {
-			modelScore(0, x, y, a.Grid.Data[x][y], model1, &result)
-			modelScore(1, x, y, a.Grid.Data[x][y], model2, &result)
-			modelScore(2, x, y, a.Grid.Data[x][y], model3, &result)
+			if value := a.Grid.Data[x][y]; value != 0 {
+				modelScore(0, x, y, value, model1, &result)
+				modelScore(1, x, y, value, model2, &result)
+				modelScore(2, x, y, value, model3, &result)
+			}
 		}
 	}
 	var max int

@@ -58,7 +58,7 @@ func compute(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		a := &ai.AI{Grid: g, Active: true}
-		dire := a.GetBest()
+		dire := a.Search()
 		result := map[string]grid.Direction{"dire": dire}
 		p, _ = json.Marshal(result)
 		log.Println(string(p))
