@@ -45,7 +45,7 @@ func main() {
 	})
 	http.HandleFunc("/compute", compute)
 
-	log.Printf("Service started on \x1b[32;1m%s\x1b[32;1m\n", *addr)
+	log.Printf("Service started on \x1b[32;1m%s\x1b[32;1m\x1b[0m\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 

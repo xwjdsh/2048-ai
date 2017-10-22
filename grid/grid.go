@@ -23,6 +23,18 @@ func (g *Grid) Clone() *Grid {
 	return gridClone
 }
 
+func (g *Grid) Max() int {
+	max := 0
+	for _, row := range g.Data {
+		for _, value := range row {
+			if value > max {
+				max = value
+			}
+		}
+	}
+	return max
+}
+
 func (g *Grid) VacantPoints() []utils.Point {
 	points := []utils.Point{}
 	for x, row := range g.Data {

@@ -22,27 +22,49 @@ var directions = []grid.Direction{
 	grid.RIGHT,
 }
 
+var expectMap = map[int]float64{
+	2: 0.9,
+	4: 0.1,
+}
+
+var (
+	model1 = [][]int{
+		{16, 15, 14, 13},
+		{9, 10, 11, 12},
+		{8, 7, 6, 5},
+		{1, 2, 3, 4},
+	}
+	model2 = [][]int{
+		{16, 15, 12, 4},
+		{14, 13, 11, 3},
+		{10, 9, 8, 2},
+		{7, 6, 5, 1},
+	}
+	model3 = [][]int{
+		{16, 15, 14, 4},
+		{13, 12, 11, 3},
+		{10, 9, 8, 2},
+		{7, 6, 5, 1},
+	}
+)
+
 func (a *AI) Search() grid.Direction {
 	var (
 		bestDire  = grid.NONE
 		bestScore float64
 	)
+	dept := a.deptSelect()
 	for _, dire := range directions {
 		newGrid := a.Grid.Clone()
 		if newGrid.Move(dire) {
 			newAI := &AI{Grid: newGrid, Active: false}
-			if newScore := newAI.expectSearch(6); newScore > bestScore {
+			if newScore := newAI.expectSearch(dept); newScore > bestScore {
 				bestDire = dire
 				bestScore = newScore
 			}
 		}
 	}
 	return bestDire
-}
-
-var expectMap = map[int]float64{
-	2: 0.9,
-	4: 0.1,
 }
 
 func (a *AI) expectSearch(dept int) float64 {
@@ -75,27 +97,6 @@ func (a *AI) expectSearch(dept int) float64 {
 	}
 	return score
 }
-
-var (
-	model1 = [][]int{
-		{16, 15, 14, 13},
-		{9, 10, 11, 12},
-		{8, 7, 6, 5},
-		{1, 2, 3, 4},
-	}
-	model2 = [][]int{
-		{16, 15, 12, 4},
-		{14, 13, 11, 3},
-		{10, 9, 8, 2},
-		{7, 6, 5, 1},
-	}
-	model3 = [][]int{
-		{16, 15, 14, 4},
-		{13, 12, 11, 3},
-		{10, 9, 8, 2},
-		{7, 6, 5, 1},
-	}
-)
 
 func (a *AI) score() int {
 	result := make([]int, 24)
@@ -131,4 +132,15 @@ func modelScore(index, x, y, value int, model [][]int, result *[]int) {
 
 	r[start+6] += value * model[y][3-x]
 	r[start+7] += value * model[3-y][3-x]
+}
+
+func (a *AI) deptSelect() int {
+	dept := 4
+	max := a.Grid.Max()
+	if max >= 2048 {
+		dept = 6
+	} else if max >= 1024 {
+		dept = 5
+	}
+	return dept
 }
