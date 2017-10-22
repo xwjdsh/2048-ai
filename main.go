@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -17,9 +18,19 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+var logo = `
+██████╗  ██████╗ ██╗  ██╗ █████╗        █████╗ ██╗
+╚════██╗██╔═████╗██║  ██║██╔══██╗      ██╔══██╗██║
+ █████╔╝██║██╔██║███████║╚█████╔╝█████╗███████║██║
+██╔═══╝ ████╔╝██║╚════██║██╔══██╗╚════╝██╔══██║██║
+███████╗╚██████╔╝     ██║╚█████╔╝      ██║  ██║██║
+╚══════╝ ╚═════╝      ╚═╝ ╚════╝       ╚═╝  ╚═╝╚═╝
+`
+
 var addr = flag.String("addr", ":8080", "http service address")
 
 func main() {
+	fmt.Println(logo)
 	flag.Parse()
 	static := http.FileServer(http.Dir("./2048"))
 	http.Handle("/js/", static)
@@ -32,9 +43,9 @@ func main() {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		indexTpl.Execute(w, nil)
 	})
-
 	http.HandleFunc("/compute", compute)
-	log.Printf("Service start...[%s]\n", *addr)
+
+	log.Printf("Service started on \x1b[32;1m%s\x1b[32;1m\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
@@ -61,7 +72,6 @@ func compute(w http.ResponseWriter, r *http.Request) {
 		dire := a.Search()
 		result := map[string]grid.Direction{"dire": dire}
 		p, _ = json.Marshal(result)
-		log.Println(string(p))
 		if err := conn.WriteMessage(messageType, p); err != nil {
 			log.Println("write message error:", err.Error())
 			break
