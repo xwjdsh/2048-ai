@@ -5,6 +5,8 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.actuator       = new Actuator;
 
   this.startTiles     = 2;
+  this.running        = false;
+  this.ws;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
@@ -273,41 +275,55 @@ GameManager.prototype.positionsEqual = function (first, second) {
   return first.x === second.x && first.y === second.y;
 };
 
-GameManager.prototype.autoRun = function () {
+GameManager.prototype.sendMessage = function () {
   var self=this;
-  if(this.running){
-    this.running=false;
-  }else{
-    if (window["WebSocket"]) {
-      var ws = new WebSocket("ws://"+window.location.host+"/compute");
-      
-      ws.onopen = function(evt) { 
+  if (window["WebSocket"]) {
+    if(!self.ws){
+      self.ws = new WebSocket("ws://"+window.location.host+"/compute");
+      self.ws.onopen = function(evt) { 
         self.running=true;
         console.log("Connection open ..."); 
-        ws.send(JSON.stringify({
+        self.ws.send(JSON.stringify({
           data: self.grid.toArray()
         }));
+        self.updateButton();
       };
       
-      ws.onmessage = function(evt) {
+      self.ws.onmessage = function(evt) {
         var resp=JSON.parse(evt.data);
-        console.log( "Received Message: " + resp);
+        console.log( "Received Message: " + resp.dire);
         if(self.run(resp.dire)){
-          ws.send(JSON.stringify({
+          self.ws.send(JSON.stringify({
             data: self.grid.toArray()
           }));
         }
       };
       
-      ws.onclose = function(evt) {
+      self.ws.onclose = function(evt) {
         self.running=false;
         console.log("Connection closed.");
-      };      
-    } else {
-      var item = document.createElement("div");
-      item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
-      appendLog(item);
-    }
+        self.updateButton();
+      };   
+    }else{
+      self.ws.send(JSON.stringify({
+        data: self.grid.toArray()
+      }));
+      self.updateButton();
+    }  
+  } else {
+    var item = document.createElement("div");
+    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+    appendLog(item);
+  }
+}
+
+GameManager.prototype.autoRun = function () {
+  var self=this;
+  if(this.running){
+    this.running=false;
+  }else{
+    this.running=true;
+    this.sendMessage();
   }
   this.updateButton()
 };
