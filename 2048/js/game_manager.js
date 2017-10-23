@@ -12,7 +12,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
   this.inputManager.on("autoRun", this.autoRun.bind(this));
-  
+  this.inputManager.on("hint", this.hint.bind(this));
 
   this.setup();
 }
@@ -22,6 +22,8 @@ GameManager.prototype.restart = function () {
   this.storageManager.clearGameState();
   this.actuator.continueGame(); // Clear the game won/lost message
   this.setup();
+  this.running=false;
+  this.updateButton();
 };
 
 // Keep playing after winning (allows going over 2048)
@@ -275,13 +277,15 @@ GameManager.prototype.positionsEqual = function (first, second) {
   return first.x === second.x && first.y === second.y;
 };
 
-GameManager.prototype.sendMessage = function () {
+GameManager.prototype.sendMessage = function (isHint) {
   var self=this;
   if (window["WebSocket"]) {
     if(!self.ws){
       self.ws = new WebSocket("ws://"+window.location.host+"/compute");
       self.ws.onopen = function(evt) { 
-        self.running=true;
+        if(!isHint){
+          self.running=true;
+        }
         console.log("Connection open ..."); 
         self.ws.send(JSON.stringify({
           data: self.grid.toArray()
@@ -292,6 +296,7 @@ GameManager.prototype.sendMessage = function () {
       self.ws.onmessage = function(evt) {
         var resp=JSON.parse(evt.data);
         console.log( "Received Message: " + resp.dire);
+        self.actuator.showHint(resp.dire);
         if(self.run(resp.dire)){
           self.ws.send(JSON.stringify({
             data: self.grid.toArray()
@@ -323,9 +328,13 @@ GameManager.prototype.autoRun = function () {
     this.running=false;
   }else{
     this.running=true;
-    this.sendMessage();
+    this.sendMessage(false);
   }
   this.updateButton()
+};
+
+GameManager.prototype.hint = function () {
+  this.sendMessage(true);
 };
 
 GameManager.prototype.updateButton = function () {
@@ -347,10 +356,8 @@ GameManager.prototype.run = function(dire) {
     this.updateButton()
     return
   }
-
-  this.actuator.showHint(dire)
   this.move(dire);
 
   var self = this;
   return this.running && !this.over && !this.won
-}
+};
