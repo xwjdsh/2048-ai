@@ -7,7 +7,7 @@
 
 AI for the 2048 game, implements by expectimax search, powered by Go.
 
-The web front-ends of 2048 game was forked from [gabrielecirulli/2048](https://github.com/gabrielecirulli/2048), the [license](https://github.com/xwjdsh/2048-ai/blob/master/2048/LICENSE.txt) saved in this project, Respect and gratitude!
+The web front-ends of 2048 game was forked from [gabrielecirulli/2048](https://github.com/gabrielecirulli/2048), respect and gratitude!
 
 ## Screenshot
 ![](https://raw.githubusercontent.com/xwjdsh/2048-ai/master/screenshot/2048-ai.jpg)
