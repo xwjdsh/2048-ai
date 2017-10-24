@@ -281,7 +281,11 @@ GameManager.prototype.sendMessage = function (isHint) {
   var self=this;
   if (window["WebSocket"]) {
     if(!self.ws){
-      self.ws = new WebSocket("ws://"+window.location.host+"/compute");
+      var protocol="ws://";
+      if(window.location.protocol=="https:"){
+        protocol="wss://";
+      }
+      self.ws = new WebSocket(protocol+window.location.host+"/compute");
       self.ws.onopen = function(evt) { 
         if(!isHint){
           self.running=true;
