@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sync/atomic"
 
 	"github.com/gorilla/websocket"
 	"github.com/xwjdsh/2048-ai/ai"
@@ -30,7 +31,10 @@ var logo = `
 ╚══════╝ ╚═════╝      ╚═╝ ╚════╝       ╚═╝  ╚═╝╚═╝
 `
 
-var addr = flag.String("addr", ":8080", "http service address")
+var (
+	addr   = flag.String("addr", ":8080", "http service address")
+	online int32
+)
 
 func main() {
 	fmt.Println(logo)
@@ -58,27 +62,30 @@ func compute(w http.ResponseWriter, r *http.Request) {
 		log.Println("upgrade error:", err.Error())
 		return
 	}
-	log.Println("Connected...")
-	defer conn.Close()
+	defer func() {
+		if conn != nil {
+			conn.Close()
+		}
+		online = atomic.AddInt32(&online, -1)
+		log.Println(online)
+	}()
+	online = atomic.AddInt32(&online, 1)
+	log.Println(online)
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("read message error:", err.Error())
 			break
 		}
 		g := &grid.Grid{}
 		if err = json.Unmarshal(p, g); err != nil {
-			log.Println("unmarshal message error:", err.Error())
 			break
 		}
-		a := &ai.AI{Grid: g, Active: true}
+		a := &ai.AI{Grid: g}
 		dire := a.Search()
 		result := map[string]grid.Direction{"dire": dire}
 		p, _ = json.Marshal(result)
 		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println("write message error:", err.Error())
 			break
 		}
 	}
-	log.Println("Disconnect.")
 }

@@ -2,17 +2,11 @@ package ai
 
 import (
 	"github.com/xwjdsh/2048-ai/grid"
-	"github.com/xwjdsh/2048-ai/utils"
 )
 
 type AI struct {
 	Grid   *grid.Grid
 	Active bool
-}
-
-type badPoint struct {
-	point utils.Point
-	fill  int // 2 or 4
 }
 
 var directions = []grid.Direction{
