@@ -5,7 +5,9 @@ import (
 )
 
 type AI struct {
-	Grid   *grid.Grid
+	// Grid is 4x4 grid.
+	Grid *grid.Grid
+	// Active is true represent need to select a direction to move, else represent computer need fill a number("2" or "4") into grid.
 	Active bool
 }
 
@@ -16,12 +18,14 @@ var directions = []grid.Direction{
 	grid.RIGHT,
 }
 
+// The chance is 10% about fill "4" into grid and 90% fill "2" in the 2048 game.
 var expectMap = map[int]float64{
 	2: 0.9,
 	4: 0.1,
 }
 
 var (
+	// There are three model weight matrix, represents three formation for 2048 game, it from internet.
 	model1 = [][]int{
 		{16, 15, 14, 13},
 		{9, 10, 11, 12},
@@ -42,15 +46,19 @@ var (
 	}
 )
 
+// Search method compute each could move direction score result by expect search algorithm
 func (a *AI) Search() grid.Direction {
 	var (
 		bestDire  = grid.NONE
 		bestScore float64
 	)
+	// depth value depending on grid's max value.
 	dept := a.deptSelect()
 	for _, dire := range directions {
 		newGrid := a.Grid.Clone()
 		if newGrid.Move(dire) {
+			// Could move.
+			// Active is false represent computer should fill number to grid now.
 			newAI := &AI{Grid: newGrid, Active: false}
 			if newScore := newAI.expectSearch(dept); newScore > bestScore {
 				bestDire = dire
@@ -61,6 +69,7 @@ func (a *AI) Search() grid.Direction {
 	return bestDire
 }
 
+// expect search implements
 func (a *AI) expectSearch(dept int) float64 {
 	if dept == 0 {
 		return float64(a.score())
@@ -77,11 +86,13 @@ func (a *AI) expectSearch(dept int) float64 {
 			}
 		}
 	} else {
+		// computer fill a number to grid now, it will try each vacant point with "2" or "4"
 		points := a.Grid.VacantPoints()
 		for k, v := range expectMap {
 			for _, point := range points {
 				newGrid := a.Grid.Clone()
 				newGrid.Data[point.X][point.Y] = k
+				// Change active, select a direction to move now.
 				newAI := &AI{Grid: newGrid, Active: true}
 				newScore := newAI.expectSearch(dept - 1)
 				score += float64(newScore) * v
@@ -92,17 +103,20 @@ func (a *AI) expectSearch(dept int) float64 {
 	return score
 }
 
+// score method evaluate a grid
 func (a *AI) score() int {
 	result := make([]int, 24)
 	for x := 0; x < 4; x++ {
 		for y := 0; y < 4; y++ {
 			if value := a.Grid.Data[x][y]; value != 0 {
+				// get eight result(rotate and flip grid) for each model,
 				modelScore(0, x, y, value, model1, &result)
 				modelScore(1, x, y, value, model2, &result)
 				modelScore(2, x, y, value, model3, &result)
 			}
 		}
 	}
+	// get max score in above 24 result, apply best formation
 	var max int
 	for _, v := range result {
 		if v > max {
@@ -112,6 +126,7 @@ func (a *AI) score() int {
 	return max
 }
 
+// get eight result(rotate and flip grid) for each model
 func modelScore(index, x, y, value int, model [][]int, result *[]int) {
 	start := index * 8
 	r := *result
@@ -128,6 +143,8 @@ func modelScore(index, x, y, value int, model [][]int, result *[]int) {
 	r[start+7] += value * model[3-y][3-x]
 }
 
+// the return value is search depth, it depending on grid's max value
+// the max value larger and depth larger, this will takes more calculations and make move became slowly but maybe have a better score result.
 func (a *AI) deptSelect() int {
 	dept := 4
 	max := a.Grid.Max()
