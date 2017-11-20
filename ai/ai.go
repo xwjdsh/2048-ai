@@ -26,6 +26,8 @@ var expectMap = map[int]float64{
 
 var (
 	// There are three model weight matrix, represents three formation for 2048 game, it from internet.
+	// The evaluate function is simple and crude, so actually it's not stable.
+	// If you feel interesting in evaluation function, you can read https://github.com/ovolve/2048-AI project source code.
 	model1 = [][]int{
 		{16, 15, 14, 13},
 		{9, 10, 11, 12},
