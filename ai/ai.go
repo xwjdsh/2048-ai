@@ -51,8 +51,8 @@ var (
 // Search method compute each could move direction score result by expect search algorithm
 func (a *AI) Search() grid.Direction {
 	var (
-		bestDire  = grid.NONE
-		bestScore float64
+		bestDire          = grid.NONE
+		bestScore float64 = -1
 	)
 	// depth value depending on grid's max value.
 	dept := a.deptSelect()
