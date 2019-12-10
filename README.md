@@ -4,6 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/xwjdsh/2048-ai)](https://goreportcard.com/report/github.com/xwjdsh/2048-ai)
 [![](https://images.microbadger.com/badges/image/wendellsun/2048-ai.svg)](https://microbadger.com/images/wendellsun/2048-ai "Get your own image badge on microbadger.com")
 [![DUB](https://img.shields.io/dub/l/vibe-d.svg)](https://github.com/xwjdsh/2048-ai/blob/master/LICENSE)
+[![run on repl.it](http://repl.it/badge/github/xwjdsh/2048-ai)](https://repl.it/github/xwjdsh/2048-ai)
 
 AI for the 2048 game, implements by expectimax search, powered by Go.
 

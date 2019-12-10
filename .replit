@@ -1,0 +1,2 @@
+language = "go"
+run = "CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o 2048-ai . && chmod +x 2048-ai && ./2048-ai"
